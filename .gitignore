@@ -1,3 +1,36 @@
+## Ignore all dot files?
+.*
+
+## Specific Apple stuff
+.DS_Store*
+._*
+.Spotlight-V100
+.Trashes
+Icon?
+
+## Temporary and backup
+*~
+#*    
+
+# ROOT stuff
+AutoDict_*
+
+
+# pictures
+*png
+*pdf
+*gif
+*eps
+
+# Some directories
+Results
+Data
+CleanAuAu
+old
+bin
+
+
+
 # Compiled Object files
 *.slo
 *.lo
