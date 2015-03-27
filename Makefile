@@ -64,24 +64,26 @@ $(BDIR)/%  : $(ODIR)/%.o
 ###############################################################################
 ############################# Main Targets ####################################
 ###############################################################################
-all    : $(BDIR)/SubjetWrapper \
-	 $(BDIR)/06-area
+all    : $(BDIR)/SubjetWrapper $(BDIR)/DevSubjetWrapper 
 
 #$(BDIR)/PythiaInAuAuSubjetWrapper
 
-$(ODIR)/06-area.o			: $(SDIR)/06-area.cxx $(INCS)
-$(BDIR)/06-area				: $(ODIR)/06-area.o
 
-$(ODIR)/SubjetAnalysis.o 		: $(SDIR)/SubjetAnalysis.cxx $(INCS) $(SDIR)/SubjetParameters.hh 
+$(ODIR)/SubjetAnalysis.o 		: $(SDIR)/SubjetAnalysis.cxx    $(INCS) $(SDIR)/SubjetParameters.hh 
+$(ODIR)/DevSubjetAnalysis.o 		: $(SDIR)/DevSubjetAnalysis.cxx $(INCS) $(SDIR)/SubjetParameters.hh 
+
 # Force recompile if parameters change
 $(ODIR)/SubjetWrapper.o		 	: $(SDIR)/SubjetWrapper.cxx 		$(INCS) $(SDIR)/SubjetParameters.hh
-$(ODIR)/PythiaInAuAuSubjetWrapper.o 	: $(SDIR)/PythiaInAuAuSubjetWrapper.cxx $(INCS) $(SDIR)/SubjetParameters.hh
+$(ODIR)/DevSubjetWrapper.o		: $(SDIR)/DevSubjetWrapper.cxx 		$(INCS) $(SDIR)/SubjetParameters.hh
 
 
 #SubJets
-$(BDIR)/PythiaInAuAuSubjetWrapper 	: $(ODIR)/PythiaInAuAuSubjetWrapper.o 	$(ODIR)/SubjetAnalysis.o
+$(BDIR)/DevSubjetWrapper		: $(ODIR)/DevSubjetWrapper.o 		$(ODIR)/DevSubjetAnalysis.o
 $(BDIR)/SubjetWrapper			: $(ODIR)/SubjetWrapper.o 		$(ODIR)/SubjetAnalysis.o
-$(BDIR)/MySubjets			: $(ODIR)/MySubjets.o
+
+#$(ODIR)/PythiaInAuAuSubjetWrapper.o 	: $(SDIR)/PythiaInAuAuSubjetWrapper.cxx $(INCS) $(SDIR)/SubjetParameters.hh
+#$(BDIR)/PythiaInAuAuSubjetWrapper 	: $(ODIR)/PythiaInAuAuSubjetWrapper.o 	$(ODIR)/SubjetAnalysis.o
+#$(BDIR)/MySubjets			: $(ODIR)/MySubjets.o
 
 
 ###############################################################################

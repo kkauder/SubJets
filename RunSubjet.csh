@@ -24,7 +24,7 @@ foreach pcmin (0.2 1.0 2.0 )
 	    set namebase=Pythia_${lja}_R${R}_pcmin${pcmin}_${sja}_SR${S}
 	    # echo $namebase
 	    # echo SubjetWrapper -N $Nevent -lja $lja -sja $sja -R $R -S $S -pc $pcmin $pcmax -o Results/${namebase}.root 
-	    SubjetWrapper -N $Nevent -lja $lja -sja $sja -R $R -S $S -pc $pcmin $pcmax -o Results/${namebase}.root >& logs/${namebase}.log &
+	    ./bin/SubjetWrapper -N $Nevent -lja $lja -sja $sja -R $R -S $S -pc $pcmin $pcmax -o Results/${namebase}.root >& logs/${namebase}.log &
 	end
     end
 end

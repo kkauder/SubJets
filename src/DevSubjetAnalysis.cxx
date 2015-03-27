@@ -10,33 +10,27 @@
 
 // Standard ctor
 DevSubjetAnalysis::DevSubjetAnalysis ( double R, double SubR,
-				 JetAlgorithm LargeJetAlgorithm,
-				 JetAlgorithm SubJetAlgorithm,
-				 double PtJetMin, double PtJetMax,
-				 double EtaConsCut, double PtConsMin, double PtConsMax,
-				 TH2D*  NsubPt, TH2D*  SubPtFrac, TH2D*  OtherPtFrac, TH2D*  SubDeltaR, TH2D*  OtherDeltaR, TH2D*  JetArea, TH2D*  SubArea, TH2D*  OtherArea, TH2D*  SubAreaFrac, TH2D*  OtherAreaFrac,
-				 TH2D* gNsubPt, TH2D* gSubPtFrac, TH2D* gOtherPtFrac, TH2D* gSubDeltaR, TH2D* gOtherDeltaR, TH2D* gJetArea, TH2D* gSubArea, TH2D* gOtherArea, TH2D* gSubAreaFrac, TH2D* gOtherAreaFrac,
-				 TH2D* qNsubPt, TH2D* qSubPtFrac, TH2D* qOtherPtFrac, TH2D* qSubDeltaR, TH2D* qOtherDeltaR, TH2D* qJetArea, TH2D* qSubArea, TH2D* qOtherArea, TH2D* qSubAreaFrac, TH2D* qOtherAreaFrac
-				 )
-  : R(R), SubR(SubR),
-    LargeJetAlgorithm(LargeJetAlgorithm), SubJetAlgorithm(SubJetAlgorithm),
-    PtJetMin(PtJetMin), PtJetMax(PtJetMax),
-    EtaConsCut (EtaConsCut), PtConsMin (PtConsMin), PtConsMax (PtConsMax),
-    NsubPt ( NsubPt),   SubPtFrac ( SubPtFrac),  OtherPtFrac ( OtherPtFrac),
-    SubDeltaR ( SubDeltaR ), OtherDeltaR ( OtherDeltaR ),
-    JetArea ( JetArea ), SubArea ( SubArea ), OtherArea ( OtherArea ),
-    SubAreaFrac ( SubAreaFrac ), OtherAreaFrac ( OtherAreaFrac ),
-    // gluons
-    gNsubPt ( gNsubPt),   gSubPtFrac ( gSubPtFrac),  gOtherPtFrac ( gOtherPtFrac),
-    gSubDeltaR ( gSubDeltaR ), gOtherDeltaR ( gOtherDeltaR ),
-    gJetArea ( gJetArea ), gSubArea ( gSubArea ), gOtherArea ( gOtherArea ),
-    gSubAreaFrac ( gSubAreaFrac ), gOtherAreaFrac ( gOtherAreaFrac ),
-    // quarks
-    qNsubPt ( qNsubPt),   qSubPtFrac ( qSubPtFrac),  qOtherPtFrac ( qOtherPtFrac),
-    qSubDeltaR ( qSubDeltaR ), qOtherDeltaR ( qOtherDeltaR ),
-    qJetArea ( qJetArea ), qSubArea ( qSubArea ), qOtherArea ( qOtherArea ),
-    qSubAreaFrac ( qSubAreaFrac ), qOtherAreaFrac ( qOtherAreaFrac )
-  
+				       JetAlgorithm LargeJetAlgorithm,
+				       JetAlgorithm SubJetAlgorithm,
+				       double PtJetMin, double PtJetMax,
+				       double EtaConsCut, double PtConsMin, double PtConsMax,
+				       TH1D* JetPt, TH1D*  JetArea, TH1D*  Nsub, 
+				       TH2D* SubVLeadPt,       TH2D* AllVLeadPt,
+				       TH2D* SubVLeadPtFrac,   TH2D* AllVLeadPtFrac,
+				       TH2D* SubVLeadArea,     TH2D* AllVLeadArea,
+				       TH2D* SubVLeadAreaFrac, TH2D* AllVLeadAreaFrac,
+				       TH2D* SubVLeadDeltaR,   TH2D* AllVLeadDeltaR
+				       )
+: R(R), SubR(SubR),
+  LargeJetAlgorithm(LargeJetAlgorithm), SubJetAlgorithm(SubJetAlgorithm),
+  PtJetMin(PtJetMin), PtJetMax(PtJetMax),
+  EtaConsCut (EtaConsCut), PtConsMin (PtConsMin), PtConsMax (PtConsMax),
+  JetPt (JetPt), JetArea (JetArea), Nsub(Nsub),
+  SubVLeadPt ( SubVLeadPt)             ,  AllVLeadPt ( AllVLeadPt),
+  SubVLeadPtFrac ( SubVLeadPtFrac)     ,  AllVLeadPtFrac ( AllVLeadPtFrac),
+  SubVLeadArea ( SubVLeadArea)         ,  AllVLeadArea ( AllVLeadArea),
+  SubVLeadAreaFrac ( SubVLeadAreaFrac) ,  AllVLeadAreaFrac ( AllVLeadAreaFrac),
+  SubVLeadDeltaR ( SubVLeadDeltaR)     ,  AllVLeadDeltaR ( AllVLeadDeltaR)
 {
   // derived rapidity cuts
   // ---------------------
@@ -111,47 +105,6 @@ int DevSubjetAnalysis::AnalyzeAndFill ( vector<PseudoJet>& particles, vector<Pse
   // printf("%10s %15s %15s %15s %15s\n","jet #", "rapidity", "phi", "pt", "n constituents");
 
   for (unsigned int i = 0; i < JAResult.size(); i++) {
-    // jet matched to an original hard scattering?
-    // -------------------------------------------
-    int IsQuark=-1; // -1 if jet is unmatched
-    if ( pPartons ){
-      vector<PseudoJet>& partons = *pPartons;
-      for ( int p = 0; p<partons.size() ; ++p ){
-	if ( IsMatched ( JAResult[i], partons[p], R) ){
-	  IsQuark = ( abs(partons[p].user_info<JetAnalysisUserInfo>().GetQuarkCharge())>0 );
-	}
-      }
-    }
-    // Only filled if jet is matched
-    TH2D* fNsubPt=0; TH2D* fSubPtFrac=0; TH2D* fOtherPtFrac=0;
-    TH2D* fSubDeltaR=0; TH2D* fOtherDeltaR=0;
-    TH2D* fJetArea=0; TH2D* fSubArea=0; TH2D* fOtherArea=0; TH2D* fSubAreaFrac=0; TH2D* fOtherAreaFrac=0;
-
-    if ( IsQuark==0 ){
-      fNsubPt        = gNsubPt;
-      fSubPtFrac     = gSubPtFrac;
-      fOtherPtFrac   = gOtherPtFrac;
-      fSubDeltaR     = gSubDeltaR;
-      fOtherDeltaR   = gOtherDeltaR;
-      fJetArea       = gJetArea;
-      fSubArea       = gSubArea;
-      fOtherArea     = gOtherArea;
-      fSubAreaFrac   = gSubAreaFrac;
-      fOtherAreaFrac = gOtherAreaFrac;      
-    }
-    if ( IsQuark==1 ){
-      fNsubPt        = qNsubPt;
-      fSubPtFrac     = qSubPtFrac;
-      fOtherPtFrac   = qOtherPtFrac;
-      fSubDeltaR     = qSubDeltaR;
-      fOtherDeltaR   = qOtherDeltaR;
-      fJetArea       = qJetArea;
-      fSubArea       = qSubArea;
-      fOtherArea     = qOtherArea;
-      fSubAreaFrac   = qSubAreaFrac;
-      fOtherAreaFrac = qOtherAreaFrac;      
-    }
-
     
     // get the jet constituents and separate the ghosts from regular particles
     //------------------------------------------------------------------------
@@ -162,56 +115,70 @@ int DevSubjetAnalysis::AnalyzeAndFill ( vector<PseudoJet>& particles, vector<Pse
     // Recluster the particles with this set of ghosts
     //------------------------------------------------
     ClusterSequenceActiveAreaExplicitGhosts  cs_sub(particles, SubJetDef, ghosts, ghost_area);
-    vector<PseudoJet> subjets = sorted_by_pt(cs_sub.inclusive_jets());
-
-
+    // vector<PseudoJet> subjets = sorted_by_pt(cs_sub.inclusive_jets()); // ALL subjets, including ghosts
+    Selector SelectorNoGhosts = !SelectorIsPureGhost();
+    vector<PseudoJet> subjets = sorted_by_pt( SelectorNoGhosts ( cs_sub.inclusive_jets()) );
+    
+    
     // And fill histograms
     // -------------------
-    NsubPt  -> Fill( JAResult[i].perp(), subjets.size() );
-    JetArea -> Fill( JAResult[i].perp(), JAResult[i].area() );
-  
-    for (unsigned int j=0; j<subjets.size(); j++){
-      if (j==0) { // leading subjet
-	SubPtFrac    -> Fill( JAResult[i].perp(), subjets[j].perp() / JAResult[i].perp() );
-	SubDeltaR    -> Fill( JAResult[i].perp(), JAResult[i].delta_R(subjets[j]) );
-	SubArea      -> Fill( JAResult[i].perp(), subjets[j].area() );
-	SubAreaFrac  -> Fill( JAResult[i].perp(), subjets[j].area() / JAResult[i].area() );
-      } else {  // nonleading subjets
-	OtherPtFrac    -> Fill( JAResult[i].perp(), subjets[j].perp() / JAResult[i].perp() );
-	OtherDeltaR    -> Fill( JAResult[i].perp(), JAResult[i].delta_R(subjets[j]) );
-	OtherArea      -> Fill( JAResult[i].perp(), subjets[j].area() );
-	OtherAreaFrac  -> Fill( JAResult[i].perp(), subjets[j].area() / JAResult[i].area() );
-      } // leading?
+    float vJetPt   = JAResult[i].pt();
+    float vJetArea = JAResult[i].area();
+    JetPt   -> Fill( vJetPt   );
+    JetArea -> Fill( vJetArea );
+    Nsub    -> Fill( subjets.size() );
+
+    float vLeadPt     = -1;
+    float vLeadArea   = -1;
+    float vLeadDeltaR = -1;
+    float vSubPt      = -1;
+    float vSubArea    = -1;
+    float vSubDeltaR  = -1;
+    float vAllPt      = -1;
+    float vAllArea    = -1;
+    float vAllDeltaR  = -1;
+
+    
+    if ( subjets.size() <= 0 ) throw string("Found a jet with no subjets. Abort." ) ;
+    // Leading definitely exists
+    vLeadPt     = subjets.at(0).pt();
+    vLeadArea   = subjets.at(0).area();
+    vLeadDeltaR = subjets.at(0).delta_R( JAResult[i] );
+
+    // More than 1 subjet?
+    if ( subjets.size() >=2 ){      
+      vSubPt     = subjets.at(1).pt();
+      vSubArea   = subjets.at(1).area();
+      vSubDeltaR = subjets.at(1).delta_R( JAResult[i] );      
+    }
+    
+    // Fill both regardless! Handle existence of more than 1 subjet  via underflow management
+    SubVLeadPt       ->Fill ( vLeadPt, vSubPt );
+    SubVLeadPtFrac   ->Fill ( vLeadPt/vJetPt, vSubPt/vJetPt );
+    SubVLeadArea     ->Fill ( vLeadArea, vSubArea );
+    SubVLeadAreaFrac ->Fill ( vLeadArea/vJetArea, vSubArea/vJetArea );
+    SubVLeadDeltaR   ->Fill ( vLeadDeltaR, vSubDeltaR );
+    
+    for (unsigned int j=0; j<subjets.size(); j++) {      
+      vAllPt     = subjets.at(j).pt();
+      vAllArea   = subjets.at(j).area();
+      vAllDeltaR = subjets.at(j).delta_R( JAResult[i] );      
+      
+      AllVLeadPt       ->Fill ( vLeadPt, vAllPt );
+      AllVLeadPtFrac   ->Fill ( vLeadPt/vJetPt, vAllPt/vJetPt );
+      AllVLeadArea     ->Fill ( vLeadArea, vAllArea );
+      AllVLeadAreaFrac ->Fill ( vLeadArea/vJetArea, vAllArea/vJetArea );
+      AllVLeadDeltaR   ->Fill ( vLeadDeltaR, vAllDeltaR );
     }
 
-    // Same for specific leading partons
-    // ---------------------------------
 
-    if ( fNsubPt ){
-      fNsubPt  -> Fill( JAResult[i].perp(), subjets.size() );
-      fJetArea -> Fill( JAResult[i].perp(), JAResult[i].area() );
-  
-      for (unsigned int j=0; j<subjets.size(); j++){
-	if (j==0) { // leading subjet
-	  fSubPtFrac    -> Fill( JAResult[i].perp(), subjets[j].perp() / JAResult[i].perp() );
-	  fSubDeltaR    -> Fill( JAResult[i].perp(), JAResult[i].delta_R(subjets[j]) );
-	  fSubArea      -> Fill( JAResult[i].perp(), subjets[j].area() );
-	  fSubAreaFrac  -> Fill( JAResult[i].perp(), subjets[j].area() / JAResult[i].area() );
-	} else {  // nonleading subjets
-	  fOtherPtFrac    -> Fill( JAResult[i].perp(), subjets[j].perp() / JAResult[i].perp() );
-	  fOtherDeltaR    -> Fill( JAResult[i].perp(), JAResult[i].delta_R(subjets[j]) );
-	  fOtherArea      -> Fill( JAResult[i].perp(), subjets[j].area() );
-	  fOtherAreaFrac  -> Fill( JAResult[i].perp(), subjets[j].area() / JAResult[i].area() );
-	} // leading?
-      }
-    }
+    
   }
-  
   // // cleanup
   // // -------
   // delete JA;
-
-
+    
+    
   return 0;
 
 }

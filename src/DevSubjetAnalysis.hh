@@ -104,38 +104,21 @@ private :
 
   // Histos to fill
   // --------------
-  TH2D*  NsubPt;                ///< Number of subjets
-  TH2D*  SubPtFrac;             ///< pT fraction carried by leading subjet
-  TH2D*  OtherPtFrac;           ///< pT fraction carried by non-leading subjets
-  TH2D*  SubDeltaR;             ///< &Delta;R of leading subjet
-  TH2D*  OtherDeltaR;           ///< #Delta R of non-leading subjets
-  TH2D*  JetArea;               ///< Area of original jet
-  TH2D*  SubArea;               ///< Area of leading subjet
-  TH2D*  OtherArea;             ///< Area of non-leading subjets
-  TH2D*  SubAreaFrac;           ///< Area Fraction of leading subjet
-  TH2D*  OtherAreaFrac;         ///< Area Fraction of non-leading subjets
-
-  TH2D* gNsubPt;                ///< Number of subjets, leading gluon
-  TH2D* gSubPtFrac;             ///< pT fraction carried by leading subjet, leading gluon
-  TH2D* gOtherPtFrac;           ///< pT fraction carried by non-leading subjets, leading gluon
-  TH2D* gSubDeltaR;             ///< &Delta;R of leading subjet, leading gluon
-  TH2D* gOtherDeltaR;           ///< #Delta R of non-leading subjets, leading gluon
-  TH2D* gJetArea;               ///< Area of original jet, leading gluon
-  TH2D* gSubArea;               ///< Area of leading subjet, leading gluon
-  TH2D* gOtherArea;             ///< Area of non-leading subjets, leading gluon
-  TH2D* gSubAreaFrac;           ///< Area Fraction of leading subjet, leading gluon
-  TH2D* gOtherAreaFrac;         ///< Area Fraction of non-leading subjets, leading gluon
   
-  TH2D* qNsubPt;                ///< Number of subjets, leading quark
-  TH2D* qSubPtFrac;             ///< pT fraction carried by leading subjet, leading quark
-  TH2D* qOtherPtFrac;           ///< pT fraction carried by non-leading subjets, leading quark
-  TH2D* qSubDeltaR;             ///< &Delta;R of leading subjet, leading quark
-  TH2D* qOtherDeltaR;           ///< #Delta R of non-leading subjets, leading quark
-  TH2D* qJetArea;               ///< Area of original jet, leading quark
-  TH2D* qSubArea;               ///< Area of leading subjet, leading quark
-  TH2D* qOtherArea;             ///< Area of non-leading subjets, leading quark
-  TH2D* qSubAreaFrac;           ///< Area Fraction of leading subjet, leading quark
-  TH2D* qOtherAreaFrac;         ///< Area Fraction of non-leading subjets, leading quark
+  TH1D*  JetPt;
+  TH1D*  JetArea;
+  TH1D*  Nsub;
+  
+  TH2D* SubVLeadPt;            ///< p<sub>T</sub> of sub-leading vs. leading subjet
+  TH2D* AllVLeadPt;             ///< p<sub>T</sub> of all vs. leading subjet
+  TH2D* SubVLeadPtFrac;        ///< p<sub>T</sub> fraction carried by sub-leading vs. leading subjet
+  TH2D* AllVLeadPtFrac;         ///< p<sub>T</sub> fraction carried by all vs. leading subjet
+  TH2D* SubVLeadArea;          ///< area of sub-leading vs. leading subjet
+  TH2D* AllVLeadArea;           ///< area of all vs. leading subjet
+  TH2D* SubVLeadAreaFrac;      ///< area fraction carried by sub-leading vs. leading subjet
+  TH2D* AllVLeadAreaFrac;       ///< area fraction carried by all vs. leading subjet
+  TH2D* SubVLeadDeltaR;        ///< &Delta;R of sub-leading vs. leading subjet
+  TH2D* AllVLeadDeltaR;         ///< &Delta;R of all vs. leading subjet
 
 public:
   /** Standard constructor. Set up analysis parameters.
@@ -153,14 +136,17 @@ public:
       Other parameters are histograms to fill
   */
 DevSubjetAnalysis ( double R = 0.4, double SubR = 0.2,
-		 JetAlgorithm LargeJetAlgorithm=antikt_algorithm,
-		 JetAlgorithm SubJetAlgorithm=kt_algorithm,
-		 double PtJetMin  = 20.0, double PtJetMax = 100.0,
-		 double EtaConsCut = 1.0, double PtConsMin = 2.0, double PtConsMax=30,
-		 TH2D*  NsubPt=0, TH2D*  SubPtFrac=0, TH2D*  OtherPtFrac=0, TH2D*  SubDeltaR=0, TH2D*  OtherDeltaR=0, TH2D*  JetArea=0, TH2D*  SubArea=0, TH2D*  OtherArea=0, TH2D*  SubAreaFrac=0, TH2D*  OtherAreaFrac=0,
-		 TH2D* gNsubPt=0, TH2D* gSubPtFrac=0, TH2D* gOtherPtFrac=0, TH2D* gSubDeltaR=0, TH2D* gOtherDeltaR=0, TH2D* gJetArea=0, TH2D* gSubArea=0, TH2D* gOtherArea=0, TH2D* gSubAreaFrac=0, TH2D* gOtherAreaFrac=0,
-		 TH2D* qNsubPt=0, TH2D* qSubPtFrac=0, TH2D* qOtherPtFrac=0, TH2D* qSubDeltaR=0, TH2D* qOtherDeltaR=0, TH2D* qJetArea=0, TH2D* qSubArea=0, TH2D* qOtherArea=0, TH2D* qSubAreaFrac=0, TH2D* qOtherAreaFrac=0
-		 );
+		    JetAlgorithm LargeJetAlgorithm=antikt_algorithm,
+		    JetAlgorithm SubJetAlgorithm=kt_algorithm,
+		    double PtJetMin  = 20.0, double PtJetMax = 100.0,
+		    double EtaConsCut = 1.0, double PtConsMin = 2.0, double PtConsMax=30,
+		    TH1D* JetPt=0, TH1D*  JetArea=0, TH1D*  Nsub=0,
+		    TH2D* SubVLeadPt=0,       TH2D* AllVLeadPt=0,
+		    TH2D* SubVLeadPtFrac=0,   TH2D* AllVLeadPtFrac=0,
+		    TH2D* SubVLeadArea=0,     TH2D* AllVLeadArea=0,
+		    TH2D* SubVLeadAreaFrac=0, TH2D* AllVLeadAreaFrac=0,
+		    TH2D* SubVLeadDeltaR=0,   TH2D* AllVLeadDeltaR=0
+		    );
   
   /** Main analysis routine.
    * \param particles: Current event

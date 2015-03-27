@@ -2,12 +2,10 @@
 #include<string>
 #include<sstream>
 
-Int_t QuickOverwiew(  )
+Int_t QuickOverwiew(  TString SJA="antikt",  TString CMIN="0.2" )
 {
   // TString Pattern="Results/Pythia_antikt_*_kt_*pscmin2.0*.root";
   TString Pattern="Results/Pythia_antikt_R0.4_pcminXCMINX_XSJAX_SRXSRX.root";
-  TString SJA="antikt";
-  TString CMIN="0.2";
   TString SR="*";
   Pattern.ReplaceAll("XSJAX",SJA);
   Pattern.ReplaceAll("XCMINX",CMIN);
@@ -26,6 +24,7 @@ Int_t QuickOverwiew(  )
 
   gStyle->SetHistLineWidth(2);
   gStyle->SetOptStat(0);
+  gStyle->SetOptFit(1);
   float PerLine=0.05; // Line height in NDC for legend
   
 
@@ -37,7 +36,7 @@ Int_t QuickOverwiew(  )
   string line;
   ss << gSystem->GetFromPipe(TString("/bin/ls ") + Pattern );
   while(getline(ss,line)){
-    // cout << line.data() << endl;
+    cout << line.data() << endl;
     TFile * file = new TFile(line.data(), "READ");
     files.push_back( file);
   }
@@ -128,10 +127,10 @@ Int_t QuickOverwiew(  )
       
       // if ( hName.Contains("SubPtFrac") ) h->SetAxisRange(0,1.0,"x");
       // if ( hName.Contains("SubPtFrac") ) h->SetAxisRange(0,0.1,"y");
-      if ( hName.Contains("SubPtFrac") ) h->SetAxisRange(0,1,"y");
+      if ( hName.Contains("SubPtFrac") ) h->SetAxisRange(0,0.12,"y");
 
       if ( hName.Contains("OtherPtFrac") ) h->SetAxisRange(0,0.51,"x");
-      if ( hName.Contains("OtherPtFrac") ) h->SetAxisRange(0,0.7,"y");
+      if ( hName.Contains("OtherPtFrac") ) h->SetAxisRange(0,0.4,"y");
 
       if ( hName.Contains("Nsub") ) h->SetAxisRange(0,70,"x");
       if ( hName.Contains("Nsub") ) h->SetAxisRange(0,0.5,"y");
@@ -152,6 +151,12 @@ Int_t QuickOverwiew(  )
       // Draw
       h->Draw();
 
+      // Jet area: Just fit a gaussian and skip the legend
+      if ( hName.Contains("JetArea") ) {
+	h->Fit("gaus","","same");
+	continue;
+      }
+
       // construct legend entry
       infos.at(f)->GetEntry(0);
       title = TString::Format(" SubR = %0.2f", infos.at(f)->GetLeaf("SubR")->GetValue());      
@@ -159,6 +164,8 @@ Int_t QuickOverwiew(  )
       leg->Draw();
 
     } else {
+      if ( hName.Contains("JetArea") )	continue;
+      
       canvas= (TCanvas*)gROOT->GetListOfCanvases()->FindObject(cName);
       canvas->cd();
       h->Draw("same");
