@@ -192,7 +192,7 @@ int main( int argc, const char** argv ){
       PseudoJet pj = PseudoJet (*lv );
 
       // flavor info
-      TString& s = ((TObjString*)(pHardPartonNames->At(0)))->String();
+      TString& s = ((TObjString*)(pHardPartonNames->At(i)))->String();
       int qcharge=-999;
       if ( s=="g" ) qcharge = 0;
       
