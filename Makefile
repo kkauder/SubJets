@@ -1,7 +1,10 @@
 os = $(shell uname -s)
 
-#INCFLAGS      = -I$(ROOTSYS)/include -I$(FASTJETDIR)/include -I$(PYTHIA8DIR)/include -I$(STARPICOPATH)
-INCFLAGS      = -I$(AJDIR)/src -I$(ROOTSYS)/include -I$(FASTJETDIR)/include -I$(PYTHIA8DIR)/include -I$(PYTHIA8DIR)/include/Pythia8/ -I$(STARPICOPATH)
+AJDIR     = $(HOME)/PaperAj/BasicAj
+
+INCFLAGS      = -I$(ROOTSYS)/include -I$(FASTJETDIR)/include -I$(PYTHIA8DIR)/include -I$(PYTHIA8DIR)/include/Pythia8/ -I$(PYTHIA8DIR)/include/Pythia8Plugins/ -I$(STARPICOPATH)
+INCFLAGS      += -I./src
+INCFLAGS      += -I$(AJDIR)/src
 
 ifeq ($(os),Linux)
 CXXFLAGS      = 
@@ -30,11 +33,17 @@ endif
 ROOTLIBS      = $(shell root-config --libs)
 
 LIBPATH       = $(ROOTLIBS) -L$(FASTJETDIR)/lib -L$(PYTHIA8DIR)/lib -L$(STARPICOPATH)
-LIBS          = -lfastjet -lfastjettools -lpythia8  -llhapdfdummy -lTStarJetPico
+LIBS          = -lfastjet -lfastjettools -lpythia8 -lTStarJetPico
 
 LIBPATH       += -L$(AJDIR)/lib
 LIBS	      += -lMyJetlib
 
+## fun with pythia :-/
+## make is a horrible horrible tool. Do not touch these lines, any whitespace will make it break
+dummy := "$(shell find $(PYTHIA8DIR)/lib/ -name liblhapdfdummy\*)"
+ifneq ("",$(dummy))
+LIBS         += -llhapdfdummy
+endif
 
 # for cleanup
 SDIR          = src
