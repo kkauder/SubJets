@@ -33,10 +33,15 @@ endif
 ROOTLIBS      = $(shell root-config --libs)
 
 LIBPATH       = $(ROOTLIBS) -L$(FASTJETDIR)/lib -L$(PYTHIA8DIR)/lib -L$(STARPICOPATH)
-LIBS          = -lfastjet -lfastjettools -lpythia8 -lTStarJetPico
+LIBS          = -lfastjet -lfastjettools -lpythia8 -lTStarJetPico -lRecursiveTools
 
 LIBPATH       += -L$(AJDIR)/lib
 LIBS	      += -lMyJetlib
+
+## Unfolding Test
+INCFLAGS      += -I/Users/kkauder/software/RooUnfold/src
+LIBPATH       += -L/Users/kkauder/software/RooUnfold
+LIBS          += -lRooUnfold
 
 ## fun with pythia :-/
 ## make is a horrible horrible tool. Do not touch these lines, any whitespace will make it break
@@ -73,10 +78,15 @@ $(BDIR)/%  : $(ODIR)/%.o
 ###############################################################################
 ############################# Main Targets ####################################
 ###############################################################################
-all    : $(BDIR)/SubjetWrapper $(BDIR)/DevSubjetWrapper 
+all    : $(BDIR)/SubjetWrapper $(BDIR)/DevSubjetWrapper $(BDIR)/UnifiedSubjetWrapper \
+	 $(BDIR)/UnifiedContribTester \
+	 $(BDIR)/Groom \
+         $(BDIR)/UnfoldingTest \
+	 $(BDIR)/SubjetUnfolding \
+	 $(BDIR)/GroomUnfolding \
+	 $(BDIR)/DijetGroomUnfolding
 
 #$(BDIR)/PythiaInAuAuSubjetWrapper
-
 
 $(ODIR)/SubjetAnalysis.o 		: $(SDIR)/SubjetAnalysis.cxx    $(INCS) $(SDIR)/SubjetParameters.hh 
 $(ODIR)/DevSubjetAnalysis.o 		: $(SDIR)/DevSubjetAnalysis.cxx $(INCS) $(SDIR)/SubjetParameters.hh 
@@ -84,11 +94,34 @@ $(ODIR)/DevSubjetAnalysis.o 		: $(SDIR)/DevSubjetAnalysis.cxx $(INCS) $(SDIR)/Su
 # Force recompile if parameters change
 $(ODIR)/SubjetWrapper.o		 	: $(SDIR)/SubjetWrapper.cxx 		$(INCS) $(SDIR)/SubjetParameters.hh
 $(ODIR)/DevSubjetWrapper.o		: $(SDIR)/DevSubjetWrapper.cxx 		$(INCS) $(SDIR)/SubjetParameters.hh
+$(ODIR)/DevSubjetWrapper.o		: $(SDIR)/UnifiedSubjetWrapper.cxx	$(INCS) $(SDIR)/SubjetParameters.hh
 
 
 #SubJets
+$(BDIR)/UnifiedSubjetWrapper		: $(ODIR)/UnifiedSubjetWrapper.o 	$(ODIR)/DevSubjetAnalysis.o
 $(BDIR)/DevSubjetWrapper		: $(ODIR)/DevSubjetWrapper.o 		$(ODIR)/DevSubjetAnalysis.o
 $(BDIR)/SubjetWrapper			: $(ODIR)/SubjetWrapper.o 		$(ODIR)/SubjetAnalysis.o
+
+$(BDIR)/contribtest                     : $(ODIR)/contribtest.o 		$(ODIR)/DevSubjetAnalysis.o
+$(BDIR)/UnifiedContribTester		: $(ODIR)/UnifiedContribTester.o 	$(ODIR)/DevSubjetAnalysis.o
+$(BDIR)/Groom				: $(ODIR)/Groom.o		 	$(ODIR)/DevSubjetAnalysis.o
+
+## Unfolding
+$(BDIR)/GroomUnfolding   		: $(ODIR)/GroomUnfolding.o  		$(ODIR)/dict.o $(ODIR)/ktTrackEff.o
+$(BDIR)/DijetGroomUnfolding   		: $(ODIR)/DijetGroomUnfolding.o		$(ODIR)/dict.o $(ODIR)/ktTrackEff.o
+$(BDIR)/SubjetUnfolding   		: $(ODIR)/SubjetUnfolding.o  		$(ODIR)/dict.o $(ODIR)/ktTrackEff.o
+$(BDIR)/UnfoldingTest   		: $(ODIR)/UnfoldingTest.o  		$(ODIR)/dict.o $(ODIR)/ktTrackEff.o
+
+
+## for tracking
+$(SDIR)/dict.cxx	: $(SDIR)/ktTrackEff.hh
+	cd $(SDIR); rootcint -f dict.cxx -c -I. ./ktTrackEff.hh
+
+$(ODIR)/dict.o          : $(SDIR)/dict.cxx
+$(ODIR)/ktTrackEff.o    : $(SDIR)/ktTrackEff.cxx $(SDIR)/ktTrackEff.hh
+
+
+
 
 #$(ODIR)/PythiaInAuAuSubjetWrapper.o 	: $(SDIR)/PythiaInAuAuSubjetWrapper.cxx $(INCS) $(SDIR)/SubjetParameters.hh
 #$(BDIR)/PythiaInAuAuSubjetWrapper 	: $(ODIR)/PythiaInAuAuSubjetWrapper.o 	$(ODIR)/SubjetAnalysis.o

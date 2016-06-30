@@ -83,7 +83,7 @@ int main(){
       lv = (TLorentzVector*) pFullEvent->At(i);
       // Ensure kinematic similarity
       if ( lv->Pt()<0.2 ) continue;
-      if ( fabs( lv->Eta()>1) ) continue;
+      if ( fabs( lv->Eta() )>1 ) continue;
       CurrentPythiaEvent.push_back( PseudoJet (*lv ) );
     }
     FullPythiaEvent.push_back ( CurrentPythiaEvent );

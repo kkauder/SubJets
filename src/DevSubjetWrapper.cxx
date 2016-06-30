@@ -41,7 +41,8 @@ int main( int argc, const char** argv ){
   
   // Defaults
   // --------
-  TString PythiaName = "pytest.root";
+  // TString PythiaName = "pytest.root";
+  TString PythiaName = "Data/PythiaAndMc.root";
   TString ChainName = "tree";
   TString OutFileName = "Results/SubjetResult.root";
 
@@ -151,18 +152,26 @@ int main( int argc, const char** argv ){
   assert ( PythiaJets->GetEntries()>0 && "Something went wrong loading the Pythia jets.");
   NPythiaEvents=min(NPythiaEvents,PythiaJets->GetEntries() );
   
-  TClonesArray* pFullEvent = new TClonesArray("TLorentzVector");
-  PythiaJets->GetBranch("Particles")->SetAutoDelete(kFALSE);
-  PythiaJets->SetBranchAddress("Particles", &pFullEvent);
+  // TClonesArray* pFullEvent = new TClonesArray("TLorentzVector");
+  // PythiaJets->GetBranch("Particles")->SetAutoDelete(kFALSE);
+  // PythiaJets->SetBranchAddress("Particles", &pFullEvent);
 
-  TClonesArray* pHardPartons= new TClonesArray("TLorentzVector");
+  // TClonesArray* pHardPartons= new TClonesArray("TLorentzVector");
+  // PythiaJets->GetBranch("HardPartons")->SetAutoDelete(kFALSE);
+  // PythiaJets->SetBranchAddress("HardPartons", &pHardPartons);
+  
+  TClonesArray* pFullEvent = new TClonesArray("TStarJetVector");
+  PythiaJets->GetBranch("PythiaParticles")->SetAutoDelete(kFALSE);
+  PythiaJets->SetBranchAddress("PythiaParticles", &pFullEvent);
+
+  TClonesArray* pHardPartons= new TClonesArray("TStarJetVector");
   PythiaJets->GetBranch("HardPartons")->SetAutoDelete(kFALSE);
   PythiaJets->SetBranchAddress("HardPartons", &pHardPartons);
-  
+
   TClonesArray* pHardPartonNames= new TClonesArray("TObjString");
   PythiaJets->GetBranch("HardPartonNames")->SetAutoDelete(kFALSE);
   PythiaJets->SetBranchAddress("HardPartonNames", &pHardPartonNames);
-  
+
   vector< vector<PseudoJet> > FullPythiaEvent;
   vector<PseudoJet> CurrentPythiaEvent;
   TLorentzVector* lv;
@@ -179,7 +188,7 @@ int main( int argc, const char** argv ){
       lv = (TLorentzVector*) pFullEvent->At(i);
       // Ensure kinematic similarity
       if ( lv->Pt()< PtConsMin && lv->Pt()< PtSubConsMin ) continue;
-      if ( fabs( lv->Eta()>1) ) continue;
+      if ( fabs( lv->Eta() )>EtaConsCut ) continue;
       CurrentPythiaEvent.push_back( PseudoJet (*lv ) );
     }
     //    if ( CurrentPythiaEvent.size() ) cout << sorted_by_pt(CurrentPythiaEvent).at(0).pt() << endl;
@@ -285,6 +294,8 @@ int main( int argc, const char** argv ){
     
     vector<PseudoJet>& particles = FullPythiaEvent.at(pythiai);
     vector<PseudoJet>& partons = TriggerPartons.at(pythiai);
+    
+    // cout << particles.size() << endl;
     
     // Run analysis
     // ------------

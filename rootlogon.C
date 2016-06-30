@@ -22,8 +22,8 @@
   // Positioning of axes labels
   gStyle->SetTitleOffset(1.2);
   // grid
-  gStyle->SetPadGridX(1);
-  gStyle->SetPadGridY(1);
+  gStyle->SetPadGridX(0);
+  gStyle->SetPadGridY(0);
 
   //  Set date/time for plot
   gStyle->SetOptDate(0);
@@ -33,7 +33,7 @@
   // if (gSystem->Getenv("QTDIR"))
   //    gSystem->AddIncludePath(" -I$QTDIR/include -I$QTDIR/include/Qt -I$QTDIR/include/QtCore -I$QTDIR/include/QtGui");
 
-  // gSystem->AddIncludePath(" -I/usr/local/root_v5.32_binary_m64//include -I/Users/putschke/fastjet/include -I/Users/putschke/pythia8100/include");
+  gSystem->AddIncludePath(" -I${STARPICOPATH}");
 
   
   // To read and deal with TStarJetPicoDst's
@@ -45,6 +45,7 @@
     "$ROOTSYS/lib/libEG.so",
     "$ROOTSYS/lib/libTree.so",    
     "$STARPICOPATH/libTStarJetPico.so",
+    "~/software/RooUnfold/libRooUnfold.so",
     0
   };
 

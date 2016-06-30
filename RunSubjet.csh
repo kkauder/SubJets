@@ -10,7 +10,7 @@ setenv lja antikt
 
 setenv R 0.4
 #setenv S 0.1
-#setenv pcmin 2.0
+setenv pcmin 0.2
 setenv pcmax 30
 
 #setenv pscmin 0.2

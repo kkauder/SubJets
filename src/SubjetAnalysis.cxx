@@ -257,7 +257,6 @@ TStarJetPicoReader GetReader ( TString ChainPattern, TString TriggerString, TStr
 
 // Slightly different, preferred version of GetReader
 TStarJetPicoReader SetupReader ( TChain* chain, TString TriggerString ){
-  TStarJetPicoDefinitions::SetDebugLevel(0); // 10 for more output
 
   TStarJetPicoReader reader;
   reader.SetInputChain (chain);

@@ -79,6 +79,11 @@ DevSubjetAnalysis::DevSubjetAnalysis ( double R, double SubR,
 // ====================
 int DevSubjetAnalysis::AnalyzeAndFill ( vector<PseudoJet>& particles, vector<PseudoJet>* pPartons ){
 
+  // Reset members
+  // -------------
+  LeadingSubjets.clear();
+  SubLeadingSubjets.clear();
+  
   // Select particles to perform analysis on
   // ---------------------------------------
   vector<PseudoJet> cons = select_cons( particles );
@@ -88,7 +93,8 @@ int DevSubjetAnalysis::AnalyzeAndFill ( vector<PseudoJet>& particles, vector<Pse
   // JetAnalyzer JA ( cons, JetDef ); // NO background subtraction
   // JAResult = sorted_by_pt( select_jet ( JA.inclusive_jets() ) );
 
-  JetAnalyzer JA( cons, JetDef, AreaDef ); // WITH background subtraction
+  fastjet::Selector selector_bkgd = fastjet::SelectorAbsRapMax( EtaJetCut ) * (!fastjet::SelectorNHardest(2));
+  JetAnalyzer JA( cons, JetDef, AreaDef, selector_bkgd ); // WITH background subtraction
   Subtractor* BackgroundSubtractor =  JA.GetBackgroundSubtractor();
   JAResult = sorted_by_pt( select_jet ( (*BackgroundSubtractor)( JA.inclusive_jets() ) ) );
     
@@ -104,29 +110,44 @@ int DevSubjetAnalysis::AnalyzeAndFill ( vector<PseudoJet>& particles, vector<Pse
   // cout << "And their subjets for Rsub = " << Rsub << endl;
   // printf("%10s %15s %15s %15s %15s\n","jet #", "rapidity", "phi", "pt", "n constituents");
 
+  
   for (unsigned int i = 0; i < JAResult.size(); i++) {
     
     // get the jet constituents and separate the ghosts from regular particles
     //------------------------------------------------------------------------
     vector<PseudoJet> particles, ghosts;
     SelectorIsPureGhost().sift(JAResult[i].constituents(), ghosts, particles);
-    double ghost_area = ghosts.size() ? ghosts[0].area() : 0.01; //check!!!!!
-    
+    // double ghost_area = ghosts.size() ? ghosts[0].area() : 0.01; //check!!!!!
+    double ghost_area = ghosts.size() ? ghosts[0].area() : 0.001; //check!!!!!
+      
     // Recluster the particles with this set of ghosts
     //------------------------------------------------
     ClusterSequenceActiveAreaExplicitGhosts  cs_sub(particles, SubJetDef, ghosts, ghost_area);
     // vector<PseudoJet> subjets = sorted_by_pt(cs_sub.inclusive_jets()); // ALL subjets, including ghosts
     Selector SelectorNoGhosts = !SelectorIsPureGhost();
-    vector<PseudoJet> subjets = sorted_by_pt( SelectorNoGhosts ( cs_sub.inclusive_jets()) );
+    // vector<PseudoJet> subjets = sorted_by_pt( SelectorNoGhosts ( cs_sub.inclusive_jets()) );
     
+    // Need a new background estimator ?
+    // Then work on these lines.
+    // But the old one should be right.
+    // --------------------------------- 
+    // fastjet::JetDefinition* SubJetDefBkgd = new fastjet::JetDefinition (fastjet::kt_algorithm, SubJetDef.R());
+    // fastjet::JetMedianBackgroundEstimator* SubJetBkgdEstimator = new fastjet::JetMedianBackgroundEstimator(selector_bkgd, *SubJetDefBkgd, *area_def_bkgd);
+    // bkgd_subtractor = new fastjet::Subtractor(bkgd_estimator);
+    // Subtractor* SubBackgroundSubtractor =  JA.GetBackgroundSubtractor();
+    vector<PseudoJet> subjets = sorted_by_pt( (*BackgroundSubtractor)( SelectorNoGhosts ( cs_sub.inclusive_jets()) ));
+
+    // Copy to hand to caller
+    if ( i==0 )     LeadingSubjets=subjets;
+    if ( i==1 )     SubLeadingSubjets=subjets;
     
     // And fill histograms
     // -------------------
     float vJetPt   = JAResult[i].pt();
     float vJetArea = JAResult[i].area();
-    JetPt   -> Fill( vJetPt   );
-    JetArea -> Fill( vJetArea );
-    Nsub    -> Fill( subjets.size() );
+    if ( JetPt )     JetPt -> Fill( vJetPt   );
+    if ( JetArea ) JetArea -> Fill( vJetArea );
+    if ( Nsub )    Nsub    -> Fill( subjets.size() );
 
     float vLeadPt     = -1;
     float vLeadArea   = -1;
@@ -153,22 +174,26 @@ int DevSubjetAnalysis::AnalyzeAndFill ( vector<PseudoJet>& particles, vector<Pse
     }
     
     // Fill both regardless! Handle existence of more than 1 subjet  via underflow management
-    SubVLeadPt       ->Fill ( vLeadPt, vSubPt );
-    SubVLeadPtFrac   ->Fill ( vLeadPt/vJetPt, vSubPt/vJetPt );
-    SubVLeadArea     ->Fill ( vLeadArea, vSubArea );
-    SubVLeadAreaFrac ->Fill ( vLeadArea/vJetArea, vSubArea/vJetArea );
-    SubVLeadDeltaR   ->Fill ( vLeadDeltaR, vSubDeltaR );
+    if ( SubVLeadPt ){
+      SubVLeadPt       ->Fill ( vLeadPt, vSubPt );
+      SubVLeadPtFrac   ->Fill ( vLeadPt/vJetPt, vSubPt/vJetPt );
+      SubVLeadArea     ->Fill ( vLeadArea, vSubArea );
+      SubVLeadAreaFrac ->Fill ( vLeadArea/vJetArea, vSubArea/vJetArea );
+      SubVLeadDeltaR   ->Fill ( vLeadDeltaR, vSubDeltaR );
+    }
     
     for (unsigned int j=0; j<subjets.size(); j++) {      
       vAllPt     = subjets.at(j).pt();
       vAllArea   = subjets.at(j).area();
       vAllDeltaR = subjets.at(j).delta_R( JAResult[i] );      
       
-      AllVLeadPt       ->Fill ( vLeadPt, vAllPt );
-      AllVLeadPtFrac   ->Fill ( vLeadPt/vJetPt, vAllPt/vJetPt );
-      AllVLeadArea     ->Fill ( vLeadArea, vAllArea );
-      AllVLeadAreaFrac ->Fill ( vLeadArea/vJetArea, vAllArea/vJetArea );
-      AllVLeadDeltaR   ->Fill ( vLeadDeltaR, vAllDeltaR );
+      if (  AllVLeadPt ){
+	AllVLeadPt       ->Fill ( vLeadPt, vAllPt );
+	AllVLeadPtFrac   ->Fill ( vLeadPt/vJetPt, vAllPt/vJetPt );
+	AllVLeadArea     ->Fill ( vLeadArea, vAllArea );
+	AllVLeadAreaFrac ->Fill ( vLeadArea/vJetArea, vAllArea/vJetArea );
+	AllVLeadDeltaR   ->Fill ( vLeadDeltaR, vAllDeltaR );
+      }
     }
 
 
@@ -185,81 +210,52 @@ int DevSubjetAnalysis::AnalyzeAndFill ( vector<PseudoJet>& particles, vector<Pse
 
 
 // Helper to deal with repetitive stuff
-TStarJetPicoReader GetReader ( TString ChainPattern, TString TriggerString, TString ChainName ){
+TStarJetPicoReader* SetupReader ( TChain* chain, TString TriggerString, const double RefMultCut ){
   TStarJetPicoDefinitions::SetDebugLevel(0); // 10 for more output
 
-  TStarJetPicoReader reader;
-  TChain* tree = new TChain( ChainName );
-  tree->Add( ChainPattern );
-  reader.SetInputChain (tree);
-
-  // Event and track selection
-  // -------------------------
-  TStarJetPicoEventCuts* evCuts = reader.GetEventCuts();
-  evCuts->SetTriggerSelection( TriggerString ); //All, MB, HT, pp, ppHT, ppJP
-  // Additional cuts
-  evCuts->SetVertexZCut (SubjetParameters::VzCut);
-  evCuts->SetRefMultCut (SubjetParameters::RefMultCut);
-  evCuts->SetVertexZDiffCut( SubjetParameters::VzDiffCut );
-
-  // Tracks: Some standard high quality cuts
-  TStarJetPicoTrackCuts* trackCuts = reader.GetTrackCuts();
-  trackCuts->SetDCACut( SubjetParameters::DcaCut );
-  trackCuts->SetMinNFitPointsCut( SubjetParameters::NFitMin );
-  trackCuts->SetFitOverMaxPointsCut( SubjetParameters::NFitRatio );
-  trackCuts->SetMaxPtCut ( SubjetParameters::PtConsMax );
-
-  // Towers:
-  TStarJetPicoTowerCuts* towerCuts = reader.GetTowerCuts();
-  towerCuts->SetMaxEtCut( SubjetParameters::EtTowerMax );
-  // cout << "Using these tower cuts:" << endl;
-  // cout << "  GetMaxEtCut = " << towerCuts->GetMaxEtCut() << endl;
-  // cout << "  Gety8PythiaCut = " << towerCuts->Gety8PythiaCut() << endl;
-
-  // V0s: Turn off
-  reader.SetProcessV0s(false);
-
-  return reader;
-}
-
-// Slightly different, preferred version of GetReader
-TStarJetPicoReader SetupReader ( TChain* chain, TString TriggerString ){
-  TStarJetPicoDefinitions::SetDebugLevel(0); // 10 for more output
-
-  TStarJetPicoReader reader;
+  // Create on the heap
+  TStarJetPicoReader* pReader = new TStarJetPicoReader();
+  TStarJetPicoReader& reader = *pReader;
   reader.SetInputChain (chain);
 
   // Event and track selection
   // -------------------------
   TStarJetPicoEventCuts* evCuts = reader.GetEventCuts();
   evCuts->SetTriggerSelection( TriggerString ); //All, MB, HT, pp, ppHT, ppJP
-  // Additional cuts
-  evCuts->SetVertexZCut (SubjetParameters::VzCut);
-  evCuts->SetRefMultCut (SubjetParameters::RefMultCut);
-  // evCuts->SetVertexZDiffCut( SubjetParameters::VzDiffCut );
+  // Additional cuts 
+  evCuts->SetVertexZCut ( SubjetParameters::VzCut);
+  evCuts->SetRefMultCut ( RefMultCut );
+  evCuts->SetVertexZDiffCut( SubjetParameters::VzDiffCut );
+  evCuts->SetMaxEventPtCut ( SubjetParameters::MaxEventPtCut );
+  evCuts->SetMaxEventEtCut ( SubjetParameters::MaxEventEtCut );
+  // evCuts->SetReferenceCentralityCut (  6, 8 ); // 6,8 for 0-20%
+  // evCuts->SetMinEventEtCut ( -1.0 );
+  // evCuts->SetMinEventEtCut ( 6.0 );
 
-  // Tracks: Some standard high quality cuts
-  // TODO: Add track, tower quality cuts
-  // TStarJetPicoTrackCuts* trackCuts = reader.GetTrackCuts();
-  // cout << " dca : " << trackCuts->GetDCACut(  ) << endl;
-  // cout << " nfit : " <<   trackCuts->GetMinNFitPointsCut( ) << endl;
-  // cout << " nfitratio : " <<   trackCuts->GetFitOverMaxPointsCut( ) << endl;
-  // cout << " maxpt : " << trackCuts->GetMaxPtCut (  ) << endl;
-  // throw (string("done"));
 
-  // trackCuts->SetDCACut( 1.0 ); // maybe too high for low pT
-  // trackCuts->SetMinNFitPointsCut( 20 );
-  // trackCuts->SetFitOverMaxPointsCut( 0.52 );
-  // trackCuts->SetMaxPtCut ( 30 ); // should it be 10? 15?
+  // Tracks cuts
+  TStarJetPicoTrackCuts* trackCuts = reader.GetTrackCuts();
+  trackCuts->SetDCACut( SubjetParameters::DcaCut );
+  trackCuts->SetMinNFitPointsCut( SubjetParameters::NFitMin );
+  trackCuts->SetFitOverMaxPointsCut( SubjetParameters::NFitRatio );
+  trackCuts->SetMaxPtCut ( SubjetParameters::PtTrackMax );
 
-  // Towers: Don't know. Let's print out the default
-  TStarJetPicoTowerCuts* towerCuts = reader.GetTowerCuts();
-  cout << "Using these tower cuts:" << endl;
-  cout << "  GetMaxEtCut = " << towerCuts->GetMaxEtCut() << endl;
-  cout << "  Gety8PythiaCut = " << towerCuts->Gety8PythiaCut() << endl;
+  std::cout << "Using these track cuts:" << std::endl;
+  std::cout << " dca : " << trackCuts->GetDCACut(  ) << std::endl;
+  std::cout << " nfit : " <<   trackCuts->GetMinNFitPointsCut( ) << std::endl;
+  std::cout << " nfitratio : " <<   trackCuts->GetFitOverMaxPointsCut( ) << std::endl;
+  std::cout << " maxpt : " << trackCuts->GetMaxPtCut (  ) << std::endl;
+  
+  // Towers
+  TStarJetPicoTowerCuts*  towerCuts = reader.GetTowerCuts();
+  towerCuts->SetMaxEtCut(SubjetParameters::EtTowerMax);
+
+  std::cout << "Using these tower cuts:" << std::endl;
+  std::cout << "  GetMaxEtCut = " << towerCuts->GetMaxEtCut() << std::endl;
+  std::cout << "  Gety8PythiaCut = " << towerCuts->Gety8PythiaCut() << std::endl;
 
   // V0s: Turn off
   reader.SetProcessV0s(false);
 
-  return reader;
+  return pReader;
 }

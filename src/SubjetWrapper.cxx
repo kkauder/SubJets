@@ -180,7 +180,7 @@ int main( int argc, const char** argv ){
       lv = (TLorentzVector*) pFullEvent->At(i);
       // Ensure kinematic similarity
       if ( lv->Pt()< PtConsMin && lv->Pt()< PtSubConsMin ) continue;
-      if ( fabs( lv->Eta()>1) ) continue;
+      if ( fabs( lv->Eta() )>EtaConsCut ) continue;
       CurrentPythiaEvent.push_back( PseudoJet (*lv ) );
     }
     FullPythiaEvent.push_back ( CurrentPythiaEvent );

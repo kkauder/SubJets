@@ -99,8 +99,10 @@ private :
   GhostedAreaSpec AreaSpec;    ///< ghosted area specification
   AreaDefinition AreaDef;      ///< jet area definition
 
-  
-  vector<PseudoJet> JAResult;  ///< Unaltered clustering result
+  // Results
+  vector<PseudoJet> JAResult;           ///< Unaltered clustering result
+  vector<PseudoJet> LeadingSubjets;     ///< Subjets in the leading jet
+  vector<PseudoJet> SubLeadingSubjets;  ///< Subjets in the sub-leading jet
 
   // Histos to fill
   // --------------
@@ -183,6 +185,12 @@ DevSubjetAnalysis ( double R = 0.4, double SubR = 0.2,
   /// Handle to unaltered clustering result with high pT constituents
   inline vector<PseudoJet> GetJAResult() {return JAResult; };
 
+  /// Get Subjets in the leading jet
+  inline vector<PseudoJet> GetLeadingSubjets() {return LeadingSubjets;};
+
+  /// Get Subjets in the sub-leading jet
+  inline vector<PseudoJet> GetSubLeadingSubjets() {return SubLeadingSubjets;};
+
 };  
 
 
@@ -190,8 +198,11 @@ DevSubjetAnalysis ( double R = 0.4, double SubR = 0.2,
     \param chain: pointer to a TStarJetPicoReader chain
     \param TriggerString: trigger string in the TStarJetPicoReader. Possible values: 
     <tt>All, MB, HT, pp, ppHT, ppJP</tt>
+    \param refmultCut: minimum Refmult, gRefmult, RefmultCorr as appropriate 
+    Have to create on the heap and return a pointer to deal with scope issues.
  */
-TStarJetPicoReader SetupReader ( TChain* chain, TString TriggerString );
+TStarJetPicoReader* SetupReader ( TChain* chain, TString TriggerString, const double RefMultCut );
+
 
 
 #endif // __DEVSUBJETANALYSIS_HH
