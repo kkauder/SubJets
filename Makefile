@@ -1,13 +1,16 @@
 os = $(shell uname -s)
 
-AJDIR     = $(HOME)/PaperAj/BasicAj
+AJDIR     = $(HOME)/BasicAj
 
 INCFLAGS      = -I$(ROOTSYS)/include -I$(FASTJETDIR)/include -I$(PYTHIA8DIR)/include -I$(PYTHIA8DIR)/include/Pythia8/ -I$(PYTHIA8DIR)/include/Pythia8Plugins/ -I$(STARPICOPATH)
 INCFLAGS      += -I./src
 INCFLAGS      += -I$(AJDIR)/src
 
 ifeq ($(os),Linux)
-CXXFLAGS      = 
+CXXFLAGS      = -O2 -fPIC -pipe -Wall -std=c++11
+CXXFLAGS     += -Wno-unused-variable
+CXXFLAGS     += -Wno-unused-but-set-variable
+CXXFLAGS     += -Wno-sign-compare
 else
 CXXFLAGS      = -O -fPIC -pipe -Wall -Wno-deprecated-writable-strings -Wno-unused-variable -Wno-unused-private-field -Wno-gnu-static-float-init
 ## for debugging:
@@ -15,8 +18,10 @@ CXXFLAGS      = -O -fPIC -pipe -Wall -Wno-deprecated-writable-strings -Wno-unuse
 endif
 
 ifeq ($(os),Linux)
-LDFLAGS       = -g
-LDFLAGSS      = -g --shared 
+# LDFLAGS       = -g
+# LDFLAGSS      = -g --shared
+LDFLAGS       = 
+LDFLAGSS      = --shared 
 else
 LDFLAGS       = -O -Xlinker -bind_at_load -flat_namespace
 LDFLAGSS      = -flat_namespace -undefined suppress
@@ -33,14 +38,16 @@ endif
 ROOTLIBS      = $(shell root-config --libs)
 
 LIBPATH       = $(ROOTLIBS) -L$(FASTJETDIR)/lib -L$(PYTHIA8DIR)/lib -L$(STARPICOPATH)
-LIBS          = -lfastjet -lfastjettools -lpythia8 -lTStarJetPico -lRecursiveTools
+LIBPATH      += -L$(AJDIR)/lib
+LIBS	      = 
+LIBS	     += -lMyJetlib
+LIBS         += -lfastjet -lfastjettools -lpythia8 -lTStarJetPico -lRecursiveTools
+LIBS         += -lConstituentSubtractor
 
-LIBPATH       += -L$(AJDIR)/lib
-LIBS	      += -lMyJetlib
 
 ## Unfolding Test
-INCFLAGS      += -I/Users/kkauder/software/RooUnfold/src
-LIBPATH       += -L/Users/kkauder/software/RooUnfold
+INCFLAGS      += -I$(HOME)/software/RooUnfold/src
+LIBPATH       += -L$(HOME)/software/RooUnfold
 LIBS          += -lRooUnfold
 
 ## fun with pythia :-/
@@ -59,8 +66,8 @@ BDIR          = bin
 ###############################################################################
 ################### Remake when these headers are touched #####################
 ###############################################################################
-#INCS = $(AJDIR)/JetAnalyzer.hh
-INCS = 
+INCS = $(AJDIR)/src/JetAnalyzer.hh
+#INCS = 
 
 ###############################################################################
 # standard rules
@@ -72,7 +79,8 @@ $(ODIR)/%.o : $(SDIR)/%.cxx $(INCS)
 $(BDIR)/%  : $(ODIR)/%.o 
 	@echo 
 	@echo LINKING
-	$(CXX) $(LDFLAGS) $(LIBPATH) $(LIBS) $^ -o $@
+	$(CXX) $(LDFLAGS) $(LIBPATH) $^ $(LIBS) -o $@
+
 ###############################################################################
 
 ###############################################################################
