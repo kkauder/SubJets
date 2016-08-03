@@ -31,8 +31,8 @@ namespace SubjetParameters{
   /// b) more importantly, the background subtractor contains fastjet::SelectorNHardest(2)
   ///    which doesn't work jet-by-jet and throws an error
   const int ghost_repeat = 1;
-  //const double ghost_area = 0.01;    ///< ghost area
-  const double ghost_area = 0.0005;    ///< ghost area
+  const double ghost_area = 0.01;    ///< ghost area
+  // const double ghost_area = 0.0005;    ///< ghost area
 
   // const double PtJetMin = 20.0;    ///< Min jet pT
   const double PtJetMin = 5.0;    ///< Min jet pT

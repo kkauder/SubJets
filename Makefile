@@ -145,6 +145,6 @@ clean :
 	@echo 
 	@echo CLEANING
 	rm -vf $(ODIR)/*.o
-	rm -vf $(BDIR)/*
+	rm -vrf $(BDIR)/*
 
 .PHONY : clean doxy

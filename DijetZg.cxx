@@ -2,8 +2,11 @@
   // TFile* fLo = new TFile("Results/Groom_Rhic.root","READ");
   // TFile* fLo = new TFile("Results/Groom_pp.root","READ");
 
+double CalcAj ( TLorentzVector* j1, TLorentzVector* j2 );
+
 int DijetZg(  TString sLo = "Results/Groom_pp.root" ) {
 // int DijetZg(  TString sLo = "Results/Groom_AuAu.root" ) {
+//int DijetZg(  TString sLo = "Results/Groom_RcAntiKt_AuAu.root" ) {
 
   int MinRefmult = 269;
   // MinRefmult=0;
@@ -11,7 +14,7 @@ int DijetZg(  TString sLo = "Results/Groom_pp.root" ) {
   bool LongIndex = false;
   bool UseEmb = false;
 
-  gStyle->SetOptStat(0);
+  //  gStyle->SetOptStat(0);
   gStyle->SetHistLineWidth(2);
 
   float openingAngle=0.4;
@@ -137,7 +140,11 @@ int DijetZg(  TString sLo = "Results/Groom_pp.root" ) {
   TH2D* LeadPtLoVPtHi = new TH2D("LeadPtLoVPtHi", ";p_{T,Hi};p_{T,Lo}",100, 0, 60, 100, 0, 60 );
   TH1D* LeadPtLoMinusPtHi = new TH1D("LeadPtLoMinusPtHi", ";p_{T,Lo}-p_{T,Hi}",120, -30, 30 );
 
-  TH1D* LeadPt = new TH1D("LeadPt","Leading jet p_{T}", 120, 0, 240);
+  TH1D* hLeadPtHi = new TH1D( "hLeadPtHi","p_{T}^{C} > 2 GeV/c;p_{T}^{lead} [GeV/c]", 100, 10 , 60 );
+  TH1D* hLeadPtLo = new TH1D( "hLeadPtLo","p_{T}^{C} > 0.2 GeV/c;p_{T}^{lead} [GeV/c]", 100, 10 , 60 );
+  TH1D* hSubLeadPtHi = new TH1D( "hSubLeadPtHi","p_{T}^{C} > 2 GeV/c;p_{T}^{sublead} [GeV/c]", 100, 0 , 50 );
+  TH1D* hSubLeadPtLo = new TH1D( "hSubLeadPtLo","p_{T}^{C} > 0.2 GeV/c;p_{T}^{sublead} [GeV/c]", 100, 0 , 50 );
+  // TH1D* LeadPt = new TH1D("LeadPt","Leading jet p_{T}", 120, 0, 240);
   TH1D* EmbLeadPt = new TH1D("EmbLeadPt","Embedded Leading jet p_{T}", 120, 0, 240);
   TH1D* GroomLeadPt = new TH1D("GroomLeadPt","Groomed Leading jet p_{T}", 120, 0, 240);
   TH1D* EmbGroomLeadPt = new TH1D("EmbGroomLeadPt","Groomed Embedded Leading jet p_{T}", 120, 0, 240);
@@ -173,6 +180,9 @@ int DijetZg(  TString sLo = "Results/Groom_pp.root" ) {
 
   TH1D* hdphiHi = new TH1D( "hdphiHi","#Delta#phi for hard constituent jets", 200, -2, 2 );
   TH1D* hdphiLo = new TH1D( "hdphiLo","#Delta#phi for soft constituent jets", 200, -2, 2 );
+
+  TH2D* AJ_hi = new TH2D( "AJ_hi","A_{J} for hard constituent jets;A_{J};Refmult;fraction", 50, -0.6, 0.9, 800, -0.5, 799.5 );
+  TH2D* AJ_lo = new TH2D( "AJ_lo","A_{J} for soft constituent jets;A_{J};Refmult;fraction", 50, -0.6, 0.9, 800, -0.5, 799.5 );
 
   // Analysis
   // --------
@@ -242,7 +252,7 @@ int DijetZg(  TString sLo = "Results/Groom_pp.root" ) {
     // Back-to-back?
     float dPhiHi = TMath::Pi() - fabs ( SubLeadingJetHi->DeltaPhi( *JetHi ) );
     hdphiHi->Fill( dPhiHi, weightHi );
-    if ( dPhiHi > openingAngle ) continue;
+    //if ( dPhiHi > openingAngle ) continue;
     
     // Matched?
     if ( pJetsLo->GetEntries() < 2 )      continue;
@@ -250,16 +260,42 @@ int DijetZg(  TString sLo = "Results/Groom_pp.root" ) {
 
     TStarJetVectorJet* LeadingMatch=0;
     TStarJetVectorJet* SubLeadingMatch=0;
-    if ( JetHi->DeltaR( *JetLo ) < MatchingR ) LeadingMatch = JetLo;
-    if ( JetHi->DeltaR( *SubLeadingJetLo ) < MatchingR ) LeadingMatch = SubLeadingJetLo;
-    if ( SubLeadingJetHi->DeltaR( *JetLo ) < MatchingR ) SubLeadingMatch = JetLo;
-    if ( SubLeadingJetHi->DeltaR( *SubLeadingJetLo ) < MatchingR ) SubLeadingMatch = SubLeadingJetLo;
+    // The following logic selects ONLY among the two leading lo cut jets
+    // if ( JetHi->DeltaR( *JetLo ) < MatchingR ) LeadingMatch = JetLo;
+    // if ( JetHi->DeltaR( *SubLeadingJetLo ) < MatchingR ) LeadingMatch = SubLeadingJetLo;
+    // if ( SubLeadingJetHi->DeltaR( *JetLo ) < MatchingR ) SubLeadingMatch = JetLo;
+    // if ( SubLeadingJetHi->DeltaR( *SubLeadingJetLo ) < MatchingR ) SubLeadingMatch = SubLeadingJetLo;
 
+    // Instead, do this:
+    for (int i=0; i<pJetsLo->GetEntries(); ++i ){
+      TStarJetVectorJet* j = (TStarJetVectorJet*) pJetsLo->At(i);
+      if ( JetHi->DeltaR( *j  ) < MatchingR ) {
+	LeadingMatch = j;
+	break;
+      }
+    }
+    for (int i=0; i<pJetsLo->GetEntries(); ++i ){
+      TStarJetVectorJet* j = (TStarJetVectorJet*) pJetsLo->At(i);
+      if ( SubLeadingJetHi->DeltaR( *j ) < MatchingR ) {
+	SubLeadingMatch = j;
+	break;
+      }
+    }
+    
     if ( !SubLeadingMatch || !LeadingMatch ){
-      // cout << "Couldn't match both sides" << endl;
+      if ( JetHi->Pt()>20 && SubLeadingJetHi->Pt()>10 ) cout << "Couldn't match both sides" << endl;
       continue;
     }
-    if ( JetHi->Pt()>20 && SubLeadingJetHi->Pt()>10 ) nDijets++;
+    if ( JetHi->Pt()>20 && SubLeadingJetHi->Pt()>10 ) {
+      nDijets++;
+      // LeadPt->Fill(JetHi->Pt());
+      hLeadPtHi->Fill( JetHi->Pt() );
+      hLeadPtLo->Fill( LeadingMatch->Pt() );
+      hSubLeadPtHi->Fill( SubLeadingJetHi->Pt() );
+      hSubLeadPtLo->Fill( SubLeadingMatch->Pt() );
+      AJ_hi->Fill( CalcAj( JetHi, SubLeadingJetHi ), refmult );
+      AJ_lo->Fill( CalcAj( LeadingMatch, SubLeadingMatch), refmult );
+    }
     
     // Only now fill
     // if ( Jet.GetMatch()<0 ) continue;
@@ -513,7 +549,22 @@ int DijetZg(  TString sLo = "Results/Groom_pp.root" ) {
   FUVQjet->Write();
   fOut->Write();
 
+  // new TCanvas; hLeadPtHi->Draw();
+  // new TCanvas; hSubLeadPtHi->Draw();
+  // new TCanvas; hLeadPtLo->Draw();
+  // new TCanvas; hSubLeadPtLo->Draw();
+
+
+  new TCanvas; AJ_hi->ProjectionX()->Draw();
+  new TCanvas; AJ_lo->ProjectionX()->Draw();
+
   cout << "Found " << nDijets << " 20/10 pairs" << endl;
   return;
   
 }
+// ===========================================================================
+double CalcAj ( TLorentzVector* j1, TLorentzVector* j2 ){
+  return (( j1->Pt()-j2->Pt() ) / ( j1->Pt()+j2->Pt() ));
+}
+// ===========================================================================
+    

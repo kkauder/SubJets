@@ -19,8 +19,8 @@ setenv Nevent -1
 set noglob 
 #set input='Data/ppHT/*root'
 
-setenv intype pico
-setenv chainname JetTree
+setenv intype tree
+setenv chainname TriggeredTree
 setenv etacut 1
 
 #setenv embi NONE
@@ -43,10 +43,11 @@ echo "getenv = true" >>CondorFile
 setenv pcmin 2.0
 setenv NameBase Hi_Groom
 
-setenv trig ppHT
-setenv nmix 10
+#setenv trig ppHT
+setenv nmix 20
 
-foreach inputbase ( `find Data/ppHT -name \*root | cut -c 1-22 | uniq` )
+#foreach inputbase ( `find Data/ppHT/ -name *root | cut -c 1-23 | uniq` )
+foreach inputbase ( `find AjResults -name Tow0_Eff0_\*_of_12\*root | sed 's/.root//g'` )
     set input=$inputbase*root
 
     #construct output name
@@ -60,7 +61,7 @@ foreach inputbase ( `find Data/ppHT -name \*root | cut -c 1-22 | uniq` )
     set LogFile     = logs/${NameBase}_pp_`basename ${inputbase}`.out
     set ErrFile     = logs/${NameBase}_pp_`basename ${inputbase}`.err
 
-    set Args = ( -i $input -intype ${intype} -c ${chainname} -trig ${trig} -o ${OutName} -N $Nevent -pj ${pjmin} ${pjmax} -pc ${pcmin} ${pcmax} -lja $lja -ec $etacut -R $R  -embi ${embi} -nmix ${nmix} -embintype ${embintype} -embc ${embc} -embtrig ${embtrig} )
+    set Args = ( -i $input -intype ${intype} -c ${chainname} -o ${OutName} -N $Nevent -pj ${pjmin} ${pjmax} -pc ${pcmin} ${pcmax} -lja $lja -ec $etacut -R $R  -embi ${embi} -nmix ${nmix} -embintype ${embintype} -embc ${embc} -embtrig ${embtrig} )
 
     echo "" >> CondorFile
     echo "Output       = ${LogFile}" >> CondorFile

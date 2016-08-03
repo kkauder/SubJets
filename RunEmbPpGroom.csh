@@ -10,21 +10,29 @@ make $Exec || exit
 setenv lja antikt
 #setenv lja cambri
 
-
 setenv R 0.4
 setenv pcmax 10000
 
 setenv Nevent -1
 
-setenv base Data/SmallAuAu/*root
-setenv intype pico
-setenv chainname JetTree
-setenv etacut 1
+set noglob 
+set input='Data/ppHT/*root'
+#unset noglob 
+set intype=pico
+set chainname=JetTree
 
-setenv embi NONE
 
-setenv pjmin 5
-setenv pjmax 2000
+# set embbase='Data/NewPicoDst_AuAuCentralMB/newpicoDstcentralMB*.root'
+# set embintype=pico
+# set embchainname=JetTree
+set embi=FAKERHIC
+set embintype=tree
+set embchainname=tree
+
+set etacut=1
+
+set pjmin=10
+set pjmax=2000
 
 ####### Initialize condor file
 echo ""  > CondorFile
@@ -32,30 +40,26 @@ echo "Universe     = vanilla" >> CondorFile
 echo "Executable   = ${Exec}" >> CondorFile
 echo "getenv = true" >>CondorFile
 
-setenv NameBase ''
-# setenv pcmin 0.2
-# setenv NameBase Groom
-setenv pcmin 2.0
-setenv NameBase Hi_Groom
-setenv trig HT
+setenv pcmin 0.2
+setenv NameBase Groom
+#setenv pcmin 2.0
+#setenv NameBase HighConsGroom
+setenv trig ppHT
 
-# different declustering algorithm?
-set ReclusterString=""
-# set ReclusterString="-rcja antikt"
-# setenv NameBase ${NameBase}_RcAntiKt
+#foreach embi ( ${embbase} )
+    #set noglob 
 
-
-#foreach input ( ${base}* )
-foreach input ( ${base} )
     #construct output name
     # arguments
-    set OutBase=`basename $input | sed 's/.root//g'`
-    set OutName    = Results/${NameBase}_${OutBase}.root
+    #set OutBase=`basename $embi | sed 's/.root//g'`
+    set OutBase=PpEmb
+    echo Results/${NameBase}_${OutBase}.root
+    set OutName=Results/${NameBase}_${OutBase}.root
 
     set LogFile     = logs/${NameBase}_${OutBase}.out
     set ErrFile     = logs/${NameBase}_${OutBase}.err
 
-    set Args = ( -i $input -intype ${intype} -c ${chainname} -trig ${trig} -o ${OutName} -N $Nevent -pj ${pjmin} ${pjmax} -pc ${pcmin} ${pcmax} -lja $lja ${ReclusterString} -ec $etacut -R $R  -embi ${embi} )
+    set Args = ( -i $input -intype ${intype} -c ${chainname} -trig ${trig} -o ${OutName} -N $Nevent -pj ${pjmin} ${pjmax} -pc ${pcmin} ${pcmax} -lja $lja -ec $etacut -R $R  -embi ${embi} -embintype ${embintype} -embc ${embchainname} )
 
     echo "" >> CondorFile
     echo "Output       = ${LogFile}" >> CondorFile
@@ -68,9 +72,11 @@ foreach input ( ${base} )
     echo "Logging output to " $LogFile
     echo "Logging errors to " $ErrFile
     echo
-end
+#end
 
 condor_submit CondorFile
+unset noglob
+
 
 
 
